@@ -1,7 +1,7 @@
 import strawberry
 from typing import List, Optional
-from models import ProjectMetadata, Owner
-from db import get_projects, get_owners, add_project, add_owner
+from api.models import ProjectMetadata, Owner
+from api.db import get_projects, get_owners, add_project, add_owner
 
 @strawberry.type
 class OwnerType:
@@ -16,6 +16,11 @@ class Project:
     description: Optional[str]
     ownerId: str
 
+    @strawberry.field
+    def owner(self) -> Optional[OwnerType]:
+        owners = get_owners()
+        match = next((o for o in owners if o["id"] == self.ownerId), None)
+        return OwnerType(**match) if match else None
 
 # Input types for mutations
 @strawberry.input

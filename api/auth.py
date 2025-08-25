@@ -2,6 +2,8 @@ import os
 from fastapi import Request, HTTPException
 from jose import jwt, JWTError
 import requests
+from dotenv import load_dotenv
+load_dotenv()
 
 # Azure AD Settings (replace with your values)
 TENANT_ID = os.getenv("TENANT_ID")
