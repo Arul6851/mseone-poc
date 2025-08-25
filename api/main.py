@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, Depends
+from fastapi.responses import PlainTextResponse
 from strawberry.fastapi import GraphQLRouter
 from api.schema import schema
 from api.auth import get_current_user
@@ -17,3 +18,8 @@ app.include_router(graphql_app, prefix="/graphql")
 @app.get("/")
 def root():
     return {"message": "GraphQL API secured with Azure AD. Use /graphql"}
+
+@app.get("/schema", response_class=PlainTextResponse)
+def get_schema():
+    """Export GraphQL schema in SDL format."""
+    return schema.as_str()
