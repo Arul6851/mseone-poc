@@ -1,12 +1,13 @@
+import os
 from fastapi import Request, HTTPException
 from jose import jwt, JWTError
 import requests
 
 # Azure AD Settings (replace with your values)
-TENANT_ID = "becdf9d3-b3e3-4fde-9aa5-e67ce0b5f957"
-CLIENT_ID = "7125c2cc-bbc1-48b8-9e0d-e0d18946a0a6"
-ISSUER = f"https://login.microsoftonline.com/{TENANT_ID}/"
-JWKS_URL = f"https://login.microsoftonline.com/{TENANT_ID}/discovery/v2.0/keys"
+TENANT_ID = os.getenv("TENANT_ID")
+CLIENT_ID = os.getenv("CLIENT_ID")
+ISSUER = os.getenv("ISSUER")
+JWKS_URL = os.getenv("JWKS_URL")
 
 ALLOWED_AUDIENCES = f"api://{CLIENT_ID}"
 ALLOWED_ISSUERS = [

@@ -1,54 +1,70 @@
 import strawberry
 from typing import List, Optional
-from api.models import ProjectMetadata, Owner
-
-# Mock Data
-owners = [
-    Owner(id=1, name="Alice", email="alice@example.com"),
-    Owner(id=2, name="Bob", email="bob@example.com"),
-    Owner(id=3, name="Charlie", email="charlie@example.com"),
-]
-
-projects = [
-    ProjectMetadata(id=1, name="AI Platform", description="ML APIs", owner=owners[0]),
-    ProjectMetadata(id=2, name="Cloud Infra", description="Azure AKS setup", owner=owners[1]),
-    ProjectMetadata(id=3, name="API Gateway", description="GraphQL services", owner=owners[2]),
-    ProjectMetadata(id=4, name="Data Lake", description="Storage solution", owner=owners[0]),
-]
+from models import ProjectMetadata, Owner
+from db import get_projects, get_owners, add_project, add_owner
 
 @strawberry.type
 class OwnerType:
-    id: int
+    id: str
     name: str
     email: Optional[str]
 
 @strawberry.type
 class Project:
-    id: int
+    id: str
     name: str
     description: Optional[str]
-    owner: OwnerType
+    ownerId: str
+
+
+# Input types for mutations
+@strawberry.input
+class OwnerInput:
+    id: str
+    name: str
+    email: Optional[str] = None
+
+@strawberry.input
+class ProjectInput:
+    id: str
+    name: str
+    description: Optional[str] = None
+    ownerId: str
+
 
 @strawberry.type
 class Query:
     @strawberry.field
     def project_metadata(
         self,
-        info: strawberry.Info,
+        info,
         skip: int = 0,
         limit: int = 10,
         owner_name: Optional[str] = None,
         project_name: Optional[str] = None,
     ) -> List[Project]:
-        user = info.context.get("user")  # Safe
-        print("Authenticated User:", user)
+        projects = get_projects(owner_name, project_name, skip, limit)
+        return [Project(**p) for p in projects]
 
-        filtered = projects
-        if owner_name:
-            filtered = [p for p in filtered if p.owner.name.lower() == owner_name.lower()]
-        if project_name:
-            filtered = [p for p in filtered if project_name.lower() in p.name.lower()]
+    @strawberry.field
+    def owners(self, info) -> List[OwnerType]:
+        owners = get_owners()
+        return [OwnerType(**o) for o in owners]
 
-        return filtered[skip: skip + limit]
 
-schema = strawberry.Schema(query=Query)
+@strawberry.type
+class Mutation:
+    @strawberry.mutation
+    def add_owner(self, info, owner: OwnerInput) -> OwnerType:
+        new_owner = Owner(**owner.__dict__)
+        add_owner(new_owner)
+        return OwnerType(**new_owner.dict())
+
+    @strawberry.mutation
+    def add_project(self, info, project: ProjectInput) -> Project:
+        new_project = ProjectMetadata(**project.__dict__)
+        add_project(new_project)
+        return Project(**new_project.dict())
+
+
+schema = strawberry.Schema(query=Query, mutation=Mutation)
